@@ -1,0 +1,38 @@
+version: 2
+
+sources:
+  - name: public
+    database: analytics_dw
+    schema: public
+    tables:
+      - name: raw_order_events
+        description: "Raw append-only order event log (webhook feed). Duplicates and out-of-order events are expected."
+
+models:
+  - name: stg_event_orders
+    description: "Staging layer: keeps only the first ingested copy of each webhook event (idempotent deduplication)."
+    columns:
+      - name: event_id
+        data_tests:
+          - not_null
+          - unique
+      - name: order_id
+        data_tests:
+          - not_null
+      - name: customer_id
+        data_tests:
+          - not_null
+
+  - name: fct_event_orders
+    description: "Financial reconciliation mart: one row per order with net realized revenue and anomaly classification."
+    columns:
+      - name: order_id
+        data_tests:
+          - not_null
+          - unique
+      - name: customer_id
+        data_tests:
+          - not_null
+      - name: financial_status
+        data_tests:
+          - not_null
